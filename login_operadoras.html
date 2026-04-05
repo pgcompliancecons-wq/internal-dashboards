@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance ANS — Acesso</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080a0f;--bg2:#0e1118;--bg3:#151a24;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);--text:#eceef4;--text2:#7c839e;--text3:#3e4459;--accent:#1d6fa8;--accent2:#3fa8dc;--ok:#22c55e;--ok2:#4ade80;--warn:#f0a020;--err:#ff4d4d;--syne:'Syne',sans-serif;--dm:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--dm);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(29,111,168,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(29,111,168,.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;animation:drift 14s ease-in-out infinite alternate}
+.orb-1{width:480px;height:480px;background:rgba(29,111,168,.10);top:-100px;left:-120px}
+.orb-2{width:360px;height:360px;background:rgba(34,197,94,.06);bottom:-80px;right:-80px;animation-delay:-6s}
+@keyframes drift{0%{transform:translate(0,0)}100%{transform:translate(28px,18px)}}
+.layout{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:1fr 480px}
+.left{display:flex;flex-direction:column;justify-content:space-between;padding:48px 56px;border-right:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-icon{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.brand-icon svg{width:18px;height:18px}
+.brand-name{font-family:var(--syne);font-size:15px;font-weight:700}
+.brand-sub{font-size:11px;color:var(--text3);margin-top:1px;font-family:var(--mono)}
+.left-content{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 0 40px}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:500;color:var(--accent2);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px}
+.hero-tag-dot{width:6px;height:6px;border-radius:50%;background:var(--ok2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-title{font-family:var(--syne);font-size:clamp(28px,3.2vw,44px);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:20px}
+.hero-title span{color:var(--ok2)}
+.hero-desc{font-size:15px;color:var(--text2);line-height:1.7;max-width:420px;margin-bottom:48px}
+.stats{display:flex;gap:32px}
+.stat{border-left:2px solid var(--bg3);padding-left:16px}
+.stat-val{font-family:var(--syne);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.stat-label{font-size:11px;color:var(--text3);margin-top:3px;font-family:var(--mono)}
+.modules{margin-top:48px}
+.modules-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:14px}
+.module-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);margin-bottom:8px}
+.mdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dok{background:var(--ok2)}.dwarn{background:var(--warn)}.dinfo{background:var(--accent2)}
+.left-footer{font-size:11px;color:var(--text3);display:flex;gap:16px;font-family:var(--mono)}
+.left-footer a{color:var(--text3);text-decoration:none}
+.right{display:flex;align-items:center;justify-content:center;padding:48px;background:var(--bg2)}
+.box{width:100%;max-width:360px}
+.eyebrow{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);margin-bottom:10px}
+.login-title{font-family:var(--syne);font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.hint-box{background:rgba(29,111,168,.07);border:1px solid rgba(63,168,220,.18);border-radius:10px;padding:12px 14px;margin-bottom:18px}
+.hint-title{font-size:10px;font-weight:600;color:var(--accent2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.hint-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:8px}
+.hint-label{font-size:11px;color:var(--text3);flex-shrink:0}
+.hint-val{font-size:11px;font-family:var(--mono);color:var(--text2);cursor:pointer;transition:color .15s;text-align:right}
+.hint-val:hover{color:var(--accent2);text-decoration:underline}
+.hint-sep{border-top:1px solid rgba(255,255,255,.06);margin:6px 0}
+.field{margin-bottom:14px}
+.field-label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.field-wrap{position:relative}
+.fi{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;align-items:center}
+.fi svg{width:14px;height:14px}
+.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 13px 11px 38px;font-size:14px;color:var(--text);font-family:var(--dm);outline:none;transition:border-color .2s,box-shadow .2s}
+.field input::placeholder{color:var(--text3)}
+.field input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(63,168,220,.12)}
+.field input.ei{border-color:var(--err)}
+.pw-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;display:flex;align-items:center}
+.pw-toggle:hover{color:var(--text2)}
+.field-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.remember{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)}
+.remember input{accent-color:var(--accent2)}
+.forgot{font-size:12px;color:var(--accent2);text-decoration:none}
+.btn-login{width:100%;padding:13px;background:var(--accent);color:#fff;font-size:14px;font-weight:500;border:none;border-radius:10px;cursor:pointer;font-family:var(--dm);transition:background .15s,transform .1s;position:relative;overflow:hidden}
+.btn-login:hover{background:#165e8e}
+.btn-login:active{transform:scale(.98)}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+.btn-text{transition:opacity .2s}
+.btn-spinner{display:none;position:absolute;inset:0;align-items:center;justify-content:center}
+.btn-login.loading .btn-text{opacity:0}
+.btn-login.loading .btn-spinner{display:flex}
+.spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-msg{display:none;background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.22);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--err);margin-bottom:12px;align-items:center;gap:8px}
+.err-msg.show{display:flex}
+.login-footer{margin-top:20px;text-align:center;font-size:10px;color:var(--text3);font-family:var(--mono);line-height:1.8}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.box>*{animation:slideUp .35s ease both}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.left{display:none}.right{padding:24px 20px;background:var(--bg)}.box{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="layout">
+  <div class="left">
+    <div class="brand">
+      <div class="brand-icon"><svg viewBox="0 0 18 18" fill="none"><path d="M9 1.5L16 5.25V12.75L9 16.5L2 12.75V5.25L9 1.5Z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="9" r="2.5" fill="white"/></svg></div>
+      <div><div class="brand-name">Compliance ANS</div><div class="brand-sub">Portal de Acesso · v1.0</div></div>
+    </div>
+    <div class="left-content">
+      <div class="hero-tag"><div class="hero-tag-dot"></div>Sistema ativo</div>
+      <h1 class="hero-title">Controle total sobre<br><span>governança</span> e<br>conformidade ANS.</h1>
+      <p class="hero-desc">Cada operadora acessa exclusivamente seus próprios dados — RN 443, RN 452, Compliance, Auditoria e Calendário de Entregas.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">6</div><div class="stat-label">Módulos ativos</div></div>
+        <div class="stat"><div class="stat-val">RLS</div><div class="stat-label">Dados isolados</div></div>
+        <div class="stat"><div class="stat-val">ANS</div><div class="stat-label">Conformidade</div></div>
+      </div>
+      <div class="modules">
+        <div class="modules-title">Módulos disponíveis</div>
+        <div class="module-item"><div class="mdot dok"></div>Governança Corporativa — RN 443</div>
+        <div class="module-item"><div class="mdot dok"></div>Gestão de Riscos — RN 452</div>
+        <div class="module-item"><div class="mdot dok"></div>Compliance Regulatório ANS</div>
+        <div class="module-item"><div class="mdot dok"></div>Auditoria Interna &amp; Controles</div>
+        <div class="module-item"><div class="mdot dok"></div>Calendário de Entregas</div>
+        <div class="module-item"><div class="mdot dwarn"></div>Notícias &amp; Publicações ANS</div>
+      </div>
+    </div>
+    <div class="left-footer"><span>© 2026 Compliance ANS</span><a href="#">Privacidade</a><a href="#">Suporte</a></div>
+  </div>
+  <div class="right">
+    <div class="box">
+      <div class="eyebrow">Acesso restrito</div>
+      <h2 class="login-title">Bem-vindo de volta</h2>
+      <p class="login-sub">Entre com o e-mail e senha para acessar o painel da sua operadora.</p>
+      <div class="hint-box">
+        <div class="hint-title">Acessos de demonstração</div>
+        <div class="hint-row"><span class="hint-label">Unimed Norte SP</span><span class="hint-val" data-u="unimed.norte" data-d="complianceans.com.br" onclick="fillFromEl(this)">unimed.norte&#64;complianceans.com.br</span></div>
+        <div class="hint-row"><span class="hint-label">HapSaúde Minas</span><span class="hint-val" data-u="hapsaude" data-d="complianceans.com.br" onclick="fillFromEl(this)">hapsaude&#64;complianceans.com.br</span></div>
+        <div class="hint-row"><span class="hint-label">VitaCare 360</span><span class="hint-val" data-u="vitacare" data-d="complianceans.com.br" onclick="fillFromEl(this)">vitacare&#64;complianceans.com.br</span></div>
+        <div class="hint-sep"></div>
+        <div class="hint-row"><span class="hint-label">Senha (todas)</span><span style="font-size:11px;font-family:var(--mono);color:var(--ok2);font-weight:600">123456</span></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">Clique no e-mail para preencher automaticamente</div>
+      </div>
+      <div class="err-msg" id="err-msg">
+        <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;flex-shrink:0"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span id="err-text">E-mail ou senha incorretos.</span>
+      </div>
+      <div class="field">
+        <label class="field-label">E-mail</label>
+        <div class="field-wrap">
+          <span class="fi"><svg viewBox="0 0 16 16" fill="none"><path d="M2 4h12v9H2z" stroke="currentColor" stroke-width="1.3"/><path d="M2 4l6 5 6-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+          <input type="email" id="email" placeholder="seu@operadora.com.br" autocomplete="email"/>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Senha</label>
+        <div class="field-wrap">
+          <span class="fi"><svg viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+          <button class="pw-toggle" onclick="togglePw()" type="button"><svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg></button>
+        </div>
+      </div>
+      <div class="field-row">
+        <label class="remember"><input type="checkbox" checked> Manter conectado</label>
+        <a href="#" class="forgot" onclick="forgotPw(event)">Esqueci a senha</a>
+      </div>
+      <button class="btn-login" id="btn" onclick="doLogin()">
+        <span class="btn-text">Entrar no painel</span>
+        <span class="btn-spinner"><div class="spin"></div></span>
+      </button>
+      <div class="login-footer">Acesso monitorado · Compliance ANS · Supabase</div>
+    </div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL  = 'https://kccduyyttvmhfeymmiwd.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjY2R1eXl0dHZtaGZleW1taXdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDQwMDIsImV4cCI6MjA5MDk4MDAwMn0.z-T9acOaqiTH5hn6hMLzmlCothp4qJwrbKQ9TMKtCh8';
+
+// Inicializa Supabase com timeout — se falhar usa login local
+let sb = null;
+try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); } catch(e) {}
+
+// Verifica sessão existente SEM bloquear a tela
+(async () => {
+  if (!sb) return;
+  try {
+    const { data: { session } } = await Promise.race([
+      sb.auth.getSession(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000))
+    ]);
+    if (session) window.location.href = 'https://pgcompliancecons-wq.github.io/internal-dashboards/dashboard_operadoras.html';
+  } catch(e) { /* timeout ou erro — continua na tela de login normalmente */ }
+})();
+
+function fill(email) {
+  document.getElementById('email').value = email;
+  document.getElementById('password').value = '123456';
+  hideErr();
+}
+
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pass  = document.getElementById('password').value;
+  const btn   = document.getElementById('btn');
+  hideErr();
+  if (!email || !pass) { showErr('Preencha e-mail e senha.'); return; }
+  btn.classList.add('loading'); btn.disabled = true;
+
+  try {
+    // Tenta Supabase com timeout de 5s
+    const result = await Promise.race([
+      sb.auth.signInWithPassword({ email, password: pass }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+    ]);
+    btn.classList.remove('loading'); btn.disabled = false;
+    if (result.error) {
+      const msgs = { 'Invalid login credentials': 'E-mail ou senha incorretos.', 'Too many requests': 'Muitas tentativas. Aguarde.' };
+      showErr(msgs[result.error.message] || result.error.message);
+      shake(); return;
+    }
+    window.location.href = 'https://pgcompliancecons-wq.github.io/internal-dashboards/dashboard_operadoras.html';
+  } catch(e) {
+    btn.classList.remove('loading'); btn.disabled = false;
+    showErr('Erro de conexão. Tente novamente.');
+  }
+}
+
+async function forgotPw(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  if (!email) { showErr('Digite seu e-mail antes de solicitar redefinição.'); return; }
+  try {
+    await sb.auth.resetPasswordForEmail(email);
+    alert('E-mail de redefinição enviado para ' + email);
+  } catch(e) { showErr('Erro ao enviar e-mail.'); }
+}
+
+function showErr(msg) { document.getElementById('err-text').textContent = msg; document.getElementById('err-msg').classList.add('show'); }
+function hideErr() { document.getElementById('err-msg').classList.remove('show'); document.getElementById('email').classList.remove('ei'); document.getElementById('password').classList.remove('ei'); }
+function togglePw() { const i = document.getElementById('password'); i.type = i.type === 'password' ? 'text' : 'password'; }
+function shake() { const b = document.querySelector('.box'); b.style.animation = 'none'; b.offsetHeight; b.style.animation = 'shake .4s ease'; }
+function fillFromEl(el) { fill(el.dataset.u + '@' + el.dataset.d); }
+</script></body>
+</html>
